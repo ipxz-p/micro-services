@@ -38,7 +38,7 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/micro-service-e2e/**/*"]
+      "exclude": ["apps/user-service-e2e/**/*"]
     }
   ]
 }
