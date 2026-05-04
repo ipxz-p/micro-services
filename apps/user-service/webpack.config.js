@@ -15,7 +15,14 @@ module.exports = {
       compiler: 'tsc',
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
-      assets: ['./src/assets'],
+      assets: [
+        './src/assets',
+        {
+          glob: '**/*.proto',
+          input: join(__dirname, '../../proto/user/v1'),
+          output: 'proto/user/v1',
+        },
+      ],
       optimization: false,
       outputHashing: 'none',
       generatePackageJson: true,
