@@ -3,7 +3,11 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "nx run-many --target=serve --all"
+    "dev": "nx run-many --target=serve --all",
+    "proto:format": "cd libs/proto-contracts && buf format -w .",
+    "proto:lint": "cd libs/proto-contracts && buf lint",
+    "proto:generate": "cd libs/proto-contracts && buf generate",
+    "proto:sync": "pnpm run proto:format && pnpm run proto:lint && pnpm run proto:generate"
   },
   "private": true,
   "dependencies": {
@@ -26,6 +30,7 @@
     "rxjs": "^7.8.0"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.69.0",
     "@eslint/js": "^9.8.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.0",

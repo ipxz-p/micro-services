@@ -7,38 +7,34 @@ import {
   Post,
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { firstValueFrom, Observable } from 'rxjs';
+import {
+  CreateUserRequest,
+  USER_SERVICE_NAME,
+  UserServiceClient,
+} from '@micro-service/proto-contracts';
+import { firstValueFrom } from 'rxjs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { USER_SERVICE_GRPC } from './user-grpc.constants';
 
-interface UserServiceGrpc {
-  createUser(data: {
-    email: string;
-    password: string;
-  }): Observable<{ id: number; email: string }>;
-  listUsers(data: object): Observable<{
-    users: Array<{ id: number; email: string }>;
-  }>;
-}
-
 @Controller('users')
 export class UsersGatewayController implements OnModuleInit {
-  private userGrpc!: UserServiceGrpc;
+  private userGrpc!: UserServiceClient;
 
   constructor(@Inject(USER_SERVICE_GRPC) private readonly client: ClientGrpc) {}
 
   onModuleInit() {
-    this.userGrpc = this.client.getService<UserServiceGrpc>('UserService');
+    this.userGrpc = this.client.getService<UserServiceClient>(
+      USER_SERVICE_NAME,
+    );
   }
 
   @Post()
   create(@Body() dto: CreateUserDto) {
-    return firstValueFrom(
-      this.userGrpc.createUser({
-        email: dto.email,
-        password: dto.password,
-      }),
-    );
+    const req: CreateUserRequest = {
+      email: dto.email,
+      password: dto.password,
+    };
+    return firstValueFrom(this.userGrpc.createUser(req));
   }
 
   @Get()

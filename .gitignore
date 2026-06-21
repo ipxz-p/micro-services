@@ -7,6 +7,8 @@ out-tsc
 
 # dependencies
 node_modules
+# This workspace uses pnpm only; do not commit npm's lockfile.
+package-lock.json
 
 # IDEs and editors
 /.idea
@@ -44,3 +46,4 @@ Thumbs.db
 .claude/settings.local.json
 .env
 .cursor/
+skills-lock.json

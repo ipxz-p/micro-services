@@ -1,0 +1,16 @@
+version: v1
+plugins:
+  # All .proto under proto/ (any service: proto/<domain>/v<n>/*.proto)
+  - plugin: buf.build/community/stephenh-ts-proto
+    out: src/generated
+    opt:
+      - esModuleInterop=true
+      - useNestJs=true
+      - nestJs=true
+      - returnObservable=true
+      - addGrpcMetadata=true
+      - outputEncodeMethods=false
+      - outputJsonMethods=true
+      - outputPartialMethods=false
+      - outputClientImpl=none
+

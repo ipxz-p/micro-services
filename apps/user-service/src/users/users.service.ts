@@ -1,13 +1,13 @@
+import type { CreateUserRequest } from '@micro-service/proto-contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { hash } from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateUserDto) {
+  async create(data: Pick<CreateUserRequest, 'email' | 'password'>) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: data.email },
     });

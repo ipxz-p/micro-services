@@ -16,7 +16,7 @@ import { UsersGatewayController } from './users.gateway.controller';
           transport: Transport.GRPC,
           options: {
             package: 'user.v1',
-            protoPath: join(__dirname, 'proto/user/v1/user.proto'),
+            protoPath: join(__dirname, 'user/v1/user.proto'),
             url: config.get<string>('USER_SERVICE_GRPC_URL', '127.0.0.1:50051'),
           },
         }),

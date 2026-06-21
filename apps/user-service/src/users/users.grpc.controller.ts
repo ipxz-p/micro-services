@@ -1,40 +1,57 @@
 import { status } from '@grpc/grpc-js';
 import { BadRequestException, Controller } from '@nestjs/common';
-import { GrpcMethod, RpcException } from '@nestjs/microservices';
-import { CreateUserDto } from './dto/create-user.dto';
+import { RpcException } from '@nestjs/microservices';
+import {
+  CreateUserRequest,
+  CreateUserResponse,
+  ListUsersRequest,
+  ListUsersResponse,
+  UserServiceController,
+  UserServiceControllerMethods,
+} from '@micro-service/proto-contracts';
+import { from, Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { UsersService } from './users.service';
 
+@UserServiceControllerMethods()
 @Controller()
-export class UsersGrpcController {
+export class UsersGrpcController implements UserServiceController {
   constructor(private readonly usersService: UsersService) {}
 
-  @GrpcMethod('UserService', 'CreateUser')
-  async createUser(request: { email: string; password: string }) {
-    try {
-      const created = await this.usersService.create({
+  createUser(request: CreateUserRequest): Observable<CreateUserResponse> {
+    return from(
+      this.usersService.create({
         email: request.email,
         password: request.password,
-      } as CreateUserDto);
-      return { id: created.id, email: created.email };
-    } catch (e) {
-      if (e instanceof BadRequestException) {
-        throw new RpcException({
-          code: status.ALREADY_EXISTS,
-          message: e.message,
-        });
-      }
-      throw new RpcException({
-        code: status.INTERNAL,
-        message: e instanceof Error ? e.message : 'Internal error',
-      });
-    }
+      }),
+    ).pipe(
+      map((created) => ({ id: created.id, email: created.email })),
+      catchError((e) => {
+        if (e instanceof BadRequestException) {
+          return throwError(
+            () =>
+              new RpcException({
+                code: status.ALREADY_EXISTS,
+                message: e.message,
+              }),
+          );
+        }
+        return throwError(
+          () =>
+            new RpcException({
+              code: status.INTERNAL,
+              message: e instanceof Error ? e.message : 'Internal error',
+            }),
+        );
+      }),
+    );
   }
 
-  @GrpcMethod('UserService', 'ListUsers')
-  async listUsers() {
-    const rows = await this.usersService.findAll();
-    return {
-      users: rows.map((u) => ({ id: u.id, email: u.email })),
-    };
+  listUsers(_request: ListUsersRequest): Observable<ListUsersResponse> {
+    return from(this.usersService.findAll()).pipe(
+      map((rows) => ({
+        users: rows.map((u) => ({ id: u.id, email: u.email })),
+      })),
+    );
   }
 }
