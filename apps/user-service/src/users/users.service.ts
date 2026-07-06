@@ -1,33 +1,67 @@
 import type { CreateUserRequest } from '@micro-service/proto-contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { hash } from 'bcryptjs';
+import { compare } from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: Pick<CreateUserRequest, 'email' | 'password'>) {
-    const existingUser = await this.prisma.user.findUnique({
+  async getUserByEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true },
+    });
+
+    if (!user) {
+      return { found: false };
+    }
+
+    return { found: true, id: user.id, email: user.email };
+  }
+
+  async createWithHashedPassword(
+    data: Pick<CreateUserRequest, 'email' | 'passwordHash'>,
+  ) {
+    try {
+      return await this.prisma.user.create({
+        data: {
+          email: data.email,
+          password: data.passwordHash,
+        },
+        select: {
+          id: true,
+          email: true,
+        },
+      });
+    } catch (error) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        throw new BadRequestException('User already exists');
+      }
+      throw error;
+    }
+  }
+
+  async verifyCredentials(data: { email: string; password: string }) {
+    const user = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
 
-    if (existingUser) {
-      throw new BadRequestException('User already exists');
+    if (!user) {
+      return { valid: false };
     }
 
-    const hashedPassword = await hash(data.password, 12);
+    const valid = await compare(data.password, user.password);
+    if (!valid) {
+      return { valid: false };
+    }
 
-    return this.prisma.user.create({
-      data: {
-        email: data.email,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        email: true,
-      },
-    });
+    return { valid: true, id: user.id, email: user.email };
   }
 
   findAll() {

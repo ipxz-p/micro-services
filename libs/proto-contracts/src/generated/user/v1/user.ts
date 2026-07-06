@@ -11,12 +11,33 @@ import { Observable } from "rxjs";
 
 export const protobufPackage = "user.v1";
 
+export interface GetUserByEmailRequest {
+  email: string;
+}
+
+export interface GetUserByEmailResponse {
+  found: boolean;
+  id: number;
+  email: string;
+}
+
 export interface CreateUserRequest {
+  email: string;
+  passwordHash: string;
+}
+
+export interface CreateUserResponse {
+  id: number;
+  email: string;
+}
+
+export interface VerifyCredentialsRequest {
   email: string;
   password: string;
 }
 
-export interface CreateUserResponse {
+export interface VerifyCredentialsResponse {
+  valid: boolean;
   id: number;
   email: string;
 }
@@ -35,11 +56,53 @@ export interface User {
 
 export const USER_V1_PACKAGE_NAME = "user.v1";
 
+export const GetUserByEmailRequest: MessageFns<GetUserByEmailRequest> = {
+  fromJSON(object: any): GetUserByEmailRequest {
+    return { email: isSet(object.email) ? globalThis.String(object.email) : "" };
+  },
+
+  toJSON(message: GetUserByEmailRequest): unknown {
+    const obj: any = {};
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    return obj;
+  },
+};
+
+export const GetUserByEmailResponse: MessageFns<GetUserByEmailResponse> = {
+  fromJSON(object: any): GetUserByEmailResponse {
+    return {
+      found: isSet(object.found) ? globalThis.Boolean(object.found) : false,
+      id: isSet(object.id) ? globalThis.Number(object.id) : 0,
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
+    };
+  },
+
+  toJSON(message: GetUserByEmailResponse): unknown {
+    const obj: any = {};
+    if (message.found !== false) {
+      obj.found = message.found;
+    }
+    if (message.id !== 0) {
+      obj.id = Math.round(message.id);
+    }
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    return obj;
+  },
+};
+
 export const CreateUserRequest: MessageFns<CreateUserRequest> = {
   fromJSON(object: any): CreateUserRequest {
     return {
       email: isSet(object.email) ? globalThis.String(object.email) : "",
-      password: isSet(object.password) ? globalThis.String(object.password) : "",
+      passwordHash: isSet(object.passwordHash)
+        ? globalThis.String(object.passwordHash)
+        : isSet(object.password_hash)
+        ? globalThis.String(object.password_hash)
+        : "",
     };
   },
 
@@ -48,8 +111,8 @@ export const CreateUserRequest: MessageFns<CreateUserRequest> = {
     if (message.email !== "") {
       obj.email = message.email;
     }
-    if (message.password !== "") {
-      obj.password = message.password;
+    if (message.passwordHash !== "") {
+      obj.passwordHash = message.passwordHash;
     }
     return obj;
   },
@@ -65,6 +128,50 @@ export const CreateUserResponse: MessageFns<CreateUserResponse> = {
 
   toJSON(message: CreateUserResponse): unknown {
     const obj: any = {};
+    if (message.id !== 0) {
+      obj.id = Math.round(message.id);
+    }
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    return obj;
+  },
+};
+
+export const VerifyCredentialsRequest: MessageFns<VerifyCredentialsRequest> = {
+  fromJSON(object: any): VerifyCredentialsRequest {
+    return {
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
+      password: isSet(object.password) ? globalThis.String(object.password) : "",
+    };
+  },
+
+  toJSON(message: VerifyCredentialsRequest): unknown {
+    const obj: any = {};
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    if (message.password !== "") {
+      obj.password = message.password;
+    }
+    return obj;
+  },
+};
+
+export const VerifyCredentialsResponse: MessageFns<VerifyCredentialsResponse> = {
+  fromJSON(object: any): VerifyCredentialsResponse {
+    return {
+      valid: isSet(object.valid) ? globalThis.Boolean(object.valid) : false,
+      id: isSet(object.id) ? globalThis.Number(object.id) : 0,
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
+    };
+  },
+
+  toJSON(message: VerifyCredentialsResponse): unknown {
+    const obj: any = {};
+    if (message.valid !== false) {
+      obj.valid = message.valid;
+    }
     if (message.id !== 0) {
       obj.id = Math.round(message.id);
     }
@@ -121,20 +228,28 @@ export const User: MessageFns<User> = {
 };
 
 export interface UserServiceClient {
+  getUserByEmail(request: GetUserByEmailRequest, metadata?: Metadata): Observable<GetUserByEmailResponse>;
+
   createUser(request: CreateUserRequest, metadata?: Metadata): Observable<CreateUserResponse>;
+
+  verifyCredentials(request: VerifyCredentialsRequest, metadata?: Metadata): Observable<VerifyCredentialsResponse>;
 
   listUsers(request: ListUsersRequest, metadata?: Metadata): Observable<ListUsersResponse>;
 }
 
 export interface UserServiceController {
+  getUserByEmail(request: GetUserByEmailRequest, metadata?: Metadata): Observable<GetUserByEmailResponse>;
+
   createUser(request: CreateUserRequest, metadata?: Metadata): Observable<CreateUserResponse>;
+
+  verifyCredentials(request: VerifyCredentialsRequest, metadata?: Metadata): Observable<VerifyCredentialsResponse>;
 
   listUsers(request: ListUsersRequest, metadata?: Metadata): Observable<ListUsersResponse>;
 }
 
 export function UserServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["createUser", "listUsers"];
+    const grpcMethods: string[] = ["getUserByEmail", "createUser", "verifyCredentials", "listUsers"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("UserService", method)(constructor.prototype[method], method, descriptor);
