@@ -1,4 +1,28 @@
-version: "3.9"
+x-kafka-config: &kafka-config
+  KAFKA_PROCESS_ROLES: broker,controller
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+  KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+  KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
+  CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+  KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+  KAFKA_MIN_INSYNC_REPLICAS: 2
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  KAFKA_LOG_DIRS: /var/lib/kafka/data
+
+x-kafka-healthcheck: &kafka-healthcheck
+  test:
+    [
+      "CMD-SHELL",
+      "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1 || exit 1",
+    ]
+  interval: 10s
+  timeout: 10s
+  retries: 10
+  start_period: 45s
 
 services:
   user_db:
@@ -17,5 +41,74 @@ services:
       timeout: 5s
       retries: 5
 
+  kafka-1:
+    image: apache/kafka:3.9.0
+    hostname: kafka-1
+    container_name: kafka-1
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_BROKER_1_HOST_PORT}:9092"
+    environment:
+      <<: *kafka-config
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENERS: PLAINTEXT://kafka-1:29092,CONTROLLER://kafka-1:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:29092,PLAINTEXT_HOST://localhost:${KAFKA_BROKER_1_HOST_PORT}
+    volumes:
+      - kafka_1_data:/var/lib/kafka/data
+    healthcheck: *kafka-healthcheck
+
+  kafka-2:
+    image: apache/kafka:3.9.0
+    hostname: kafka-2
+    container_name: kafka-2
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_BROKER_2_HOST_PORT}:9092"
+    environment:
+      <<: *kafka-config
+      KAFKA_NODE_ID: 2
+      KAFKA_LISTENERS: PLAINTEXT://kafka-2:29092,CONTROLLER://kafka-2:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:29092,PLAINTEXT_HOST://localhost:${KAFKA_BROKER_2_HOST_PORT}
+    volumes:
+      - kafka_2_data:/var/lib/kafka/data
+    healthcheck: *kafka-healthcheck
+
+  kafka-3:
+    image: apache/kafka:3.9.0
+    hostname: kafka-3
+    container_name: kafka-3
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_BROKER_3_HOST_PORT}:9092"
+    environment:
+      <<: *kafka-config
+      KAFKA_NODE_ID: 3
+      KAFKA_LISTENERS: PLAINTEXT://kafka-3:29092,CONTROLLER://kafka-3:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:29092,PLAINTEXT_HOST://localhost:${KAFKA_BROKER_3_HOST_PORT}
+    volumes:
+      - kafka_3_data:/var/lib/kafka/data
+    healthcheck: *kafka-healthcheck
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka_ui
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_UI_PORT}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-1:29092,kafka-2:29092,kafka-3:29092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      kafka-3:
+        condition: service_healthy
+
 volumes:
   user_db_data:
+  kafka_1_data:
+  kafka_2_data:
+  kafka_3_data:

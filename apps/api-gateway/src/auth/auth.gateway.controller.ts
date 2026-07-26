@@ -13,7 +13,7 @@ import {
   RefreshTokenRequest,
   RegisterRequest,
 } from '@micro-service/proto-contracts';
-import { firstValueFrom } from 'rxjs';
+import { callGrpc } from '../common/grpc-call.util';
 import { Public } from './decorators/public.decorator';
 import { AUTH_SERVICE_GRPC } from './auth-grpc.constants';
 import { LoginDto, RefreshTokenDto, RegisterDto } from './dto/auth.dto';
@@ -37,7 +37,7 @@ export class AuthGatewayController implements OnModuleInit {
       email: dto.email,
       password: dto.password,
     };
-    return firstValueFrom(this.authGrpc.register(req));
+    return callGrpc((metadata) => this.authGrpc.register(req, metadata));
   }
 
   @Public()
@@ -47,7 +47,7 @@ export class AuthGatewayController implements OnModuleInit {
       email: dto.email,
       password: dto.password,
     };
-    return firstValueFrom(this.authGrpc.login(req));
+    return callGrpc((metadata) => this.authGrpc.login(req, metadata));
   }
 
   @Public()
@@ -56,6 +56,6 @@ export class AuthGatewayController implements OnModuleInit {
     const req: RefreshTokenRequest = {
       refreshToken: dto.refreshToken,
     };
-    return firstValueFrom(this.authGrpc.refreshToken(req));
+    return callGrpc((metadata) => this.authGrpc.refreshToken(req, metadata));
   }
 }

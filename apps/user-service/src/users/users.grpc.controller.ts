@@ -15,7 +15,6 @@ import {
 } from '@micro-service/proto-contracts';
 import { from, Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { RequireIdentity } from '../common/decorators/require-identity.decorator';
 import { UsersService } from './users.service';
 
 @UserServiceControllerMethods()

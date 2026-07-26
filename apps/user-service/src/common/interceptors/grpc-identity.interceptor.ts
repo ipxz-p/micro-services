@@ -7,7 +7,11 @@ import {
 import type { Metadata } from '@grpc/grpc-js';
 import { Observable } from 'rxjs';
 import { runWithGrpcIdentity } from '../grpc-context';
-import { parseIdentity } from '../grpc-identity';
+import {
+  GRPC_METADATA_CORRELATION_ID,
+  parseIdentity,
+} from '../grpc-identity';
+import { runWithGrpcRequestContext } from '../grpc-request-context';
 
 @Injectable()
 export class GrpcIdentityInterceptor implements NestInterceptor {
@@ -18,13 +22,20 @@ export class GrpcIdentityInterceptor implements NestInterceptor {
 
     const metadata = context.switchToRpc().getContext<Metadata>();
     const identity = parseIdentity(metadata);
+    const correlationId = metadata?.get(GRPC_METADATA_CORRELATION_ID)?.[0];
+    const requestContext = {
+      correlationId:
+        typeof correlationId === 'string' ? correlationId : undefined,
+    };
 
     return new Observable((subscriber) => {
-      runWithGrpcIdentity(identity, () => {
-        next.handle().subscribe({
-          next: (value) => subscriber.next(value),
-          error: (error) => subscriber.error(error),
-          complete: () => subscriber.complete(),
+      runWithGrpcRequestContext(requestContext, () => {
+        runWithGrpcIdentity(identity, () => {
+          next.handle().subscribe({
+            next: (value) => subscriber.next(value),
+            error: (error) => subscriber.error(error),
+            complete: () => subscriber.complete(),
+          });
         });
       });
     });

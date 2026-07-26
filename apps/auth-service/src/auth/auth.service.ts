@@ -22,6 +22,7 @@ import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import { hash } from 'bcryptjs';
 import { firstValueFrom } from 'rxjs';
+import { callGrpc } from '../common/grpc-call.util';
 import { USER_SERVICE_GRPC } from '../users/user-grpc.constants';
 
 type TokenPayload = {
@@ -64,11 +65,14 @@ export class AuthService implements OnModuleInit {
     }
 
     const passwordHash = await hash(request.password, 12);
-    const created = await firstValueFrom(
-      this.userGrpc.createUser({
-        email: request.email,
-        passwordHash,
-      }),
+    const created = await callGrpc((metadata) =>
+      this.userGrpc.createUser(
+        {
+          email: request.email,
+          passwordHash,
+        },
+        metadata,
+      ),
     );
 
     const tokens = await this.issueTokens(created.id, created.email);
