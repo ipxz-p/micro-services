@@ -1,37 +1,59 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard, JwtSharedModule } from '@micro-service/nest-auth';
+import {
+  PlatformConfigModule,
+  appConfig,
+  appEnvShape,
+  grpcClientEnvShape,
+  grpcConfig,
+  httpConfig,
+  httpEnvShape,
+  jwtConfig,
+  jwtEnvShape,
+} from '@micro-service/nest-config';
+import { GrpcPlatformModule } from '@micro-service/nest-grpc';
+import {
+  CorrelationIdMiddleware,
+  HealthModule,
+  LoggingModule,
+} from '@micro-service/nest-observability';
+import { AuthGatewayModule } from '../auth/auth.gateway.module';
+import { UsersGatewayModule } from '../users/users.gateway.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthJwtModule } from '../auth/auth-jwt.module';
-import { AuthGatewayModule } from '../auth/auth.gateway.module';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CorrelationIdMiddleware } from '../common/correlation-id.middleware';
-import { GrpcMetadataInterceptor } from '../common/interceptors/grpc-metadata.interceptor';
-import { UsersGatewayModule } from '../users/users.gateway.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    AuthJwtModule,
+    PlatformConfigModule.forService({
+      serviceName: 'api-gateway',
+      load: [appConfig, httpConfig, grpcConfig, jwtConfig],
+      envShape: {
+        ...appEnvShape,
+        ...httpEnvShape,
+        ...grpcClientEnvShape,
+        ...jwtEnvShape,
+      },
+    }),
+    LoggingModule.forService({ serviceName: 'api-gateway' }),
+    GrpcPlatformModule.forService({ role: 'gateway' }),
+    HealthModule.forService({ serviceName: 'api-gateway' }),
+    JwtSharedModule,
     AuthGatewayModule,
     UsersGatewayModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: GrpcMetadataInterceptor,
-    },
-  ],
+  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+    consumer
+      .apply(CorrelationIdMiddleware)
+      .forRoutes({ path: '*splat', method: RequestMethod.ALL });
   }
 }

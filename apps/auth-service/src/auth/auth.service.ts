@@ -6,11 +6,11 @@ import type {
   RefreshTokenResponse,
   RegisterRequest,
   RegisterResponse,
-} from '@micro-service/proto-contracts';
+} from '@micro-service/proto-contracts/auth/v1/auth';
 import {
   USER_SERVICE_NAME,
   UserServiceClient,
-} from '@micro-service/proto-contracts';
+} from '@micro-service/proto-contracts/user/v1/user';
 import {
   Inject,
   Injectable,
@@ -22,14 +22,8 @@ import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import { hash } from 'bcryptjs';
 import { firstValueFrom } from 'rxjs';
-import { callGrpc } from '../common/grpc-call.util';
-import { USER_SERVICE_GRPC } from '../users/user-grpc.constants';
-
-type TokenPayload = {
-  sub: number;
-  email: string;
-  type: 'access' | 'refresh';
-};
+import { USER_SERVICE_GRPC, callGrpc } from '@micro-service/nest-grpc';
+import type { JwtTokenPayload } from '@micro-service/service-identity';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -42,8 +36,8 @@ export class AuthService implements OnModuleInit {
     private readonly jwtService: JwtService,
     config: ConfigService,
   ) {
-    this.accessExpiresIn = config.get<string>('JWT_ACCESS_EXPIRES_IN', '15m');
-    this.refreshExpiresIn = config.get<string>('JWT_REFRESH_EXPIRES_IN', '7d');
+    this.accessExpiresIn = config.getOrThrow<string>('jwt.accessExpiresIn');
+    this.refreshExpiresIn = config.getOrThrow<string>('jwt.refreshExpiresIn');
   }
 
   onModuleInit() {
@@ -124,21 +118,21 @@ export class AuthService implements OnModuleInit {
 
   private signAccessToken(userId: number, email: string): Promise<string> {
     return this.jwtService.signAsync(
-      { sub: userId, email, type: 'access' } satisfies TokenPayload,
+      { sub: userId, email, type: 'access' } satisfies JwtTokenPayload,
       { expiresIn: this.accessExpiresIn } as JwtSignOptions,
     );
   }
 
   private signRefreshToken(userId: number, email: string): Promise<string> {
     return this.jwtService.signAsync(
-      { sub: userId, email, type: 'refresh' } satisfies TokenPayload,
+      { sub: userId, email, type: 'refresh' } satisfies JwtTokenPayload,
       { expiresIn: this.refreshExpiresIn } as JwtSignOptions,
     );
   }
 
-  private async verifyRefreshToken(refreshToken: string): Promise<TokenPayload> {
+  private async verifyRefreshToken(refreshToken: string): Promise<JwtTokenPayload> {
     try {
-      const payload = await this.jwtService.verifyAsync<TokenPayload>(
+      const payload = await this.jwtService.verifyAsync<JwtTokenPayload>(
         refreshToken,
       );
 

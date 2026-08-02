@@ -1,9 +1,0 @@
-{
-  "name": "proto-contracts",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/proto-contracts/src",
-  "projectType": "library",
-  "tags": [],
-  "// targets": "to see all targets run: nx show project proto-contracts --web",
-  "targets": {}
-}

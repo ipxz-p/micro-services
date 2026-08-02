@@ -1,8 +1,8 @@
 import { Controller, Get, Inject, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { USER_SERVICE_NAME, UserServiceClient } from '@micro-service/proto-contracts';
-import { callGrpc } from '../common/grpc-call.util';
-import { USER_SERVICE_GRPC } from './user-grpc.constants';
+import { USER_SERVICE_NAME, UserServiceClient } from '@micro-service/proto-contracts/user/v1/user';
+import { callGrpc } from '@micro-service/nest-grpc';
+import { USER_SERVICE_GRPC } from '@micro-service/nest-grpc';
 
 @Controller('users')
 export class UsersGatewayController implements OnModuleInit {

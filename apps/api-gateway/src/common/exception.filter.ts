@@ -11,6 +11,7 @@ import {
   Catch,
   ExceptionFilter,
   ArgumentsHost,
+  Logger,
 } from '@nestjs/common';
 
 function isGrpcError(err: unknown): err is { code: number; details: string } {
@@ -55,6 +56,8 @@ function mapGrpcErrorToHttp(err: unknown): HttpException {
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(GlobalExceptionFilter.name);
+
   catch(exception: any, host: ArgumentsHost) {
     const res = host.switchToHttp().getResponse();
 
@@ -71,6 +74,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     // 2. gRPC errors
     const err = mapGrpcErrorToHttp(exception);
+
+    if (err.getStatus() >= 500) {
+      this.logger.error(
+        `Unhandled error: ${err.message}`,
+        exception instanceof Error ? exception.stack : String(exception),
+      );
+    }
 
     return res.status(err.getStatus()).json({
       statusCode: err.getStatus(),

@@ -1,13 +1,19 @@
-import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { Logger } from 'nestjs-pino';
 import { join } from 'path';
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
-  const grpcPort = process.env.GRPC_PORT ?? '50051';
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
+
+  const config = app.get(ConfigService);
+  const grpcPort = config.getOrThrow<number>('grpc.userServicePort');
+  const healthPort = config.getOrThrow<number>('health.userServicePort');
+
+  app.connectMicroservice<MicroserviceOptions>(
     {
       transport: Transport.GRPC,
       options: {
@@ -16,10 +22,16 @@ async function bootstrap() {
         url: `0.0.0.0:${grpcPort}`,
       },
     },
+    { inheritAppConfig: true },
   );
+
   app.enableShutdownHooks();
-  await app.listen();
-  Logger.log(`User service gRPC listening on 0.0.0.0:${grpcPort}`);
+  await app.startAllMicroservices();
+  await app.listen(healthPort);
+
+  app
+    .get(Logger)
+    .log(`user-service gRPC :${grpcPort} | health :${healthPort}/health/live`);
 }
 
 bootstrap();

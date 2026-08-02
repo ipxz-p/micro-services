@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+dist
+tmp
+out-tsc
+coverage
+.nx
+.git
+.github
+.env
+.env.*
+*.log

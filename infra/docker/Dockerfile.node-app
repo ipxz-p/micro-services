@@ -1,0 +1,31 @@
+#   docker build --build-arg APP=user-service -f infra/docker/Dockerfile.node-app .
+
+ARG NODE_VERSION=20-alpine
+
+FROM node:${NODE_VERSION} AS deps
+WORKDIR /workspace
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+FROM deps AS build
+ARG APP
+RUN test -n "$APP" || (echo "ต้องส่ง --build-arg APP=<ชื่อ service>" && exit 1)
+COPY . .
+RUN npx nx build "$APP" --configuration=production
+RUN npx nx run "$APP":prune
+
+FROM node:${NODE_VERSION} AS runtime
+ARG APP
+ENV NODE_ENV=production
+WORKDIR /app
+
+RUN corepack enable
+COPY --from=build /workspace/dist/apps/${APP}/package.json ./package.json
+COPY --from=build /workspace/dist/apps/${APP}/ ./
+RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
+
+USER node
+
+CMD ["node", "main.js"]

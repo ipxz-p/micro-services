@@ -1,0 +1,8 @@
+{
+  "name": "nest-grpc",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/platform/nest-grpc/src",
+  "projectType": "library",
+  "tags": ["type:platform", "scope:shared"],
+  "targets": {}
+}

@@ -2,7 +2,7 @@ import type {
   LoginRequest,
   RefreshTokenRequest,
   RegisterRequest,
-} from '@micro-service/proto-contracts';
+} from '@micro-service/proto-contracts/auth/v1/auth';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class RegisterDto implements RegisterRequest {

@@ -12,3 +12,17 @@ model User {
   email    String @unique
   password String
 }
+
+model OutboxMessage {
+  id           String    @id @default(uuid())
+  topic        String
+  partitionKey String
+  payload      Json
+  createdAt    DateTime  @default(now())
+  publishedAt  DateTime?
+  attempts     Int       @default(0)
+  lastError    String?
+
+  /// relay สนใจแค่แถวที่ publishedAt = null เรียงตาม createdAt
+  @@index([publishedAt, createdAt])
+}

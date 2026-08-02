@@ -19,7 +19,7 @@ module.exports = {
         './src/assets',
         {
           glob: '**/*.proto',
-          input: join(__dirname, '../../libs/proto-contracts'),
+          input: join(__dirname, '../../libs/contracts/proto-contracts/proto'),
           output: '.',
         },
       ],

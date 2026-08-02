@@ -1,22 +1,16 @@
 import {
-  USER_CREATED_V1_TOPIC,
+  USER_TOPICS,
   type UserCreatedV1Event,
-} from '@micro-service/event-contracts';
-import type { CreateUserRequest } from '@micro-service/proto-contracts';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+} from '@micro-service/event-contracts/user';
+import { getCorrelationId } from '@micro-service/nest-grpc';
+import type { CreateUserRequest } from '@micro-service/proto-contracts/user/v1/user';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { compare } from 'bcryptjs';
-import { getCorrelationId } from '../common/grpc-request-context';
-import { KafkaProducerService } from '@micro-service/kafka-nest';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger(UsersService.name);
-
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly kafkaProducer: KafkaProducerService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getUserByEmail(email: string) {
     const user = await this.prisma.user.findUnique({
@@ -34,21 +28,37 @@ export class UsersService {
   async createWithHashedPassword(
     data: Pick<CreateUserRequest, 'email' | 'passwordHash'>,
   ) {
+    const correlationId = getCorrelationId();
+
     try {
-      const created = await this.prisma.user.create({
-        data: {
-          email: data.email,
-          password: data.passwordHash,
-        },
-        select: {
-          id: true,
-          email: true,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const created = await tx.user.create({
+          data: {
+            email: data.email,
+            password: data.passwordHash,
+          },
+          select: { id: true, email: true },
+        });
+
+        const event: UserCreatedV1Event = {
+          eventId: crypto.randomUUID(),
+          eventType: USER_TOPICS.CREATED_V1,
+          occurredAt: new Date().toISOString(),
+          userId: created.id,
+          email: created.email,
+          ...(correlationId ? { correlationId } : {}),
+        };
+
+        await tx.outboxMessage.create({
+          data: {
+            topic: USER_TOPICS.CREATED_V1,
+            partitionKey: String(created.id),
+            payload: event,
+          },
+        });
+
+        return created;
       });
-
-      await this.publishUserCreatedEvent(created);
-
-      return created;
     } catch (error) {
       if (
         error &&
@@ -86,38 +96,5 @@ export class UsersService {
         email: true,
       },
     });
-  }
-
-  private async publishUserCreatedEvent(user: {
-    id: number;
-    email: string;
-  }): Promise<void> {
-    const correlationId = getCorrelationId();
-    const event: UserCreatedV1Event = {
-      eventId: crypto.randomUUID(),
-      eventType: USER_CREATED_V1_TOPIC,
-      occurredAt: new Date().toISOString(),
-      userId: user.id,
-      email: user.email,
-      ...(correlationId ? { correlationId } : {}),
-    };
-
-    try {
-      await this.kafkaProducer.publish(
-        USER_CREATED_V1_TOPIC,
-        String(user.id),
-        event,
-      );
-      this.logger.log(
-        `Published ${event.eventType} for userId=${user.id} eventId=${event.eventId}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to publish ${event.eventType} for userId=${user.id}: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-        error instanceof Error ? error.stack : undefined,
-      );
-    }
   }
 }

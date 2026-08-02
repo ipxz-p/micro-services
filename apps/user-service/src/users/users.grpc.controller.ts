@@ -1,6 +1,5 @@
-import { status } from '@grpc/grpc-js';
-import { BadRequestException, Controller } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { Controller } from '@nestjs/common';
+import { AllowAnonymous } from '@micro-service/nest-grpc';
 import {
   CreateUserRequest,
   CreateUserResponse,
@@ -12,9 +11,9 @@ import {
   UserServiceControllerMethods,
   VerifyCredentialsRequest,
   VerifyCredentialsResponse,
-} from '@micro-service/proto-contracts';
-import { from, Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+} from '@micro-service/proto-contracts/user/v1/user';
+import { from, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { UsersService } from './users.service';
 
 @UserServiceControllerMethods()
@@ -22,6 +21,7 @@ import { UsersService } from './users.service';
 export class UsersGrpcController implements UserServiceController {
   constructor(private readonly usersService: UsersService) {}
 
+  @AllowAnonymous()
   getUserByEmail(
     request: GetUserByEmailRequest,
   ): Observable<GetUserByEmailResponse> {
@@ -34,35 +34,17 @@ export class UsersGrpcController implements UserServiceController {
     );
   }
 
+  @AllowAnonymous()
   createUser(request: CreateUserRequest): Observable<CreateUserResponse> {
     return from(
       this.usersService.createWithHashedPassword({
         email: request.email,
         passwordHash: request.passwordHash,
       }),
-    ).pipe(
-      map((created) => ({ id: created.id, email: created.email })),
-      catchError((e) => {
-        if (e instanceof BadRequestException) {
-          return throwError(
-            () =>
-              new RpcException({
-                code: status.ALREADY_EXISTS,
-                message: e.message,
-              }),
-          );
-        }
-        return throwError(
-          () =>
-            new RpcException({
-              code: status.INTERNAL,
-              message: e instanceof Error ? e.message : 'Internal error',
-            }),
-        );
-      }),
-    );
+    ).pipe(map((created) => ({ id: created.id, email: created.email })));
   }
 
+  @AllowAnonymous()
   verifyCredentials(
     request: VerifyCredentialsRequest,
   ): Observable<VerifyCredentialsResponse> {

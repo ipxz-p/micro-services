@@ -13,7 +13,53 @@
       "!{projectRoot}/src/test-setup.[jt]s",
       "!{projectRoot}/test-setup.[jt]s"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/eslint.config.mjs",
+      "{workspaceRoot}/jest.preset.js"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"],
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"]
+    },
+    "test": {
+      "cache": true,
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+      "options": {
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "cache": true,
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"]
+    },
+    "proto-generate": {
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/**/*.proto",
+        "{projectRoot}/buf.yaml",
+        "{projectRoot}/buf.gen.yaml"
+      ],
+      "outputs": ["{projectRoot}/src/generated"]
+    }
+  },
+  "generators": {
+    "@nx/nest:application": {
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "none",
+      "linter": "eslint",
+      "strict": true,
+      "tags": "type:app"
+    },
+    "@nx/js:library": {
+      "unitTestRunner": "jest",
+      "linter": "eslint",
+      "bundler": "none"
+    }
   },
   "plugins": [
     {
@@ -37,8 +83,7 @@
       "plugin": "@nx/jest/plugin",
       "options": {
         "targetName": "test"
-      },
-      "exclude": ["apps/user-service-e2e/**/*"]
+      }
     }
   ]
 }

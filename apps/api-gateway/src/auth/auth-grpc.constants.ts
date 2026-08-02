@@ -1,1 +1,0 @@
-export const AUTH_SERVICE_GRPC = 'AUTH_SERVICE_GRPC';

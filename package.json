@@ -4,10 +4,18 @@
   "license": "MIT",
   "scripts": {
     "dev": "nx run-many --target=serve --all",
-    "proto:format": "cd libs/proto-contracts && buf format -w .",
-    "proto:lint": "cd libs/proto-contracts && buf lint",
-    "proto:generate": "cd libs/proto-contracts && buf generate",
-    "proto:sync": "pnpm run proto:format && pnpm run proto:lint && pnpm run proto:generate"
+    "lint": "nx run-many -t lint --all",
+    "test": "nx run-many -t test --all",
+    "build": "nx run-many -t build --all",
+    "proto:sync": "nx run proto-contracts:proto-generate",
+    "proto:check": "nx run proto-contracts:proto-check",
+    "db:migrate": "nx run user-service:prisma-migrate",
+    "db:deploy": "nx run user-service:prisma-migrate-deploy",
+    "db:studio": "nx run user-service:prisma-studio",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "stack:up": "docker compose -f docker-compose.yml -f docker-compose.apps.yml --profile apps up -d --build",
+    "stack:down": "docker compose -f docker-compose.yml -f docker-compose.apps.yml --profile apps down"
   },
   "private": true,
   "dependencies": {
@@ -19,6 +27,7 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/microservices": "^11.1.19",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/terminus": "^11.1.1",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "axios": "^1.6.0",
@@ -27,9 +36,13 @@
     "class-validator": "0.15.1",
     "dotenv": "^17.4.2",
     "kafkajs": "^2.2.4",
+    "nestjs-pino": "^4.6.1",
     "pg": "^8.20.0",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.69.0",
@@ -56,6 +69,7 @@
     "jest-environment-node": "^30.0.2",
     "jest-util": "^30.0.2",
     "nx": "22.6.5",
+    "pino-pretty": "^13.1.3",
     "prettier": "~3.6.2",
     "prisma": "^7.7.0",
     "ts-jest": "^29.4.0",

@@ -1,6 +1,5 @@
-import { status } from '@grpc/grpc-js';
-import { Controller, UnauthorizedException } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { Controller } from '@nestjs/common';
+import { AllowAnonymous } from '@micro-service/nest-grpc';
 import {
   AuthServiceController,
   AuthServiceControllerMethods,
@@ -10,9 +9,8 @@ import {
   RefreshTokenResponse,
   RegisterRequest,
   RegisterResponse,
-} from '@micro-service/proto-contracts';
-import { from, Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+} from '@micro-service/proto-contracts/auth/v1/auth';
+import { from, Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 
 @AuthServiceControllerMethods()
@@ -20,45 +18,18 @@ import { AuthService } from './auth.service';
 export class AuthGrpcController implements AuthServiceController {
   constructor(private readonly authService: AuthService) {}
 
+  @AllowAnonymous()
   register(request: RegisterRequest): Observable<RegisterResponse> {
-    return from(this.authService.register(request)).pipe(
-      catchError((e) => this.mapError(e)),
-    );
+    return from(this.authService.register(request));
   }
 
+  @AllowAnonymous()
   login(request: LoginRequest): Observable<LoginResponse> {
-    return from(this.authService.login(request)).pipe(
-      catchError((e) => this.mapError(e)),
-    );
+    return from(this.authService.login(request));
   }
 
-  refreshToken(
-    request: RefreshTokenRequest,
-  ): Observable<RefreshTokenResponse> {
-    return from(this.authService.refreshToken(request)).pipe(
-      catchError((e) => this.mapError(e)),
-    );
-  }
-
-  private mapError(e: unknown) {
-    if (e instanceof UnauthorizedException) {
-      return throwError(
-        () =>
-          new RpcException({
-            code: status.UNAUTHENTICATED,
-            message: e.message,
-          }),
-      );
-    }
-    if (e instanceof RpcException) {
-      return throwError(() => e);
-    }
-    return throwError(
-      () =>
-        new RpcException({
-          code: status.INTERNAL,
-          message: e instanceof Error ? e.message : 'Internal error',
-        }),
-    );
+  @AllowAnonymous()
+  refreshToken(request: RefreshTokenRequest): Observable<RefreshTokenResponse> {
+    return from(this.authService.refreshToken(request));
   }
 }

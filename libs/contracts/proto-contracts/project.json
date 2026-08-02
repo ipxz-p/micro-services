@@ -1,0 +1,30 @@
+{
+  "name": "proto-contracts",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/contracts/proto-contracts/src",
+  "projectType": "library",
+  "tags": ["type:contract", "scope:shared"],
+  "targets": {
+    "proto-generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/contracts/proto-contracts",
+        "commands": ["buf format -w .", "buf lint", "buf generate"],
+        "parallel": false
+      }
+    },
+    "proto-check": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "libs/contracts/proto-contracts",
+        "commands": [
+          "buf lint",
+          "buf generate",
+          "git diff --exit-code -- src/generated"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}

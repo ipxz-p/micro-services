@@ -3,3 +3,6 @@
 /coverage
 /.nx/cache
 /.nx/workspace-data
+
+libs/contracts/proto-contracts/src/generated
+apps/*/generated

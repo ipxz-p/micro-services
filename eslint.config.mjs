@@ -5,7 +5,12 @@ export default [
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
   {
-    ignores: ['**/dist', '**/out-tsc', 'libs/proto-contracts/src/generated/**'],
+    ignores: [
+      '**/dist',
+      '**/out-tsc',
+      'libs/contracts/proto-contracts/src/generated/**',
+      'apps/*/generated/**',
+    ],
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
@@ -17,8 +22,36 @@ export default [
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
           depConstraints: [
             {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
+              sourceTag: 'type:app',
+              onlyDependOnLibsWithTags: ['type:platform', 'type:contract'],
+            },
+            {
+              sourceTag: 'type:platform',
+              onlyDependOnLibsWithTags: ['type:platform', 'type:contract'],
+            },
+            {
+              sourceTag: 'type:contract',
+              onlyDependOnLibsWithTags: ['type:contract'],
+            },
+            {
+              sourceTag: 'scope:gateway',
+              onlyDependOnLibsWithTags: ['scope:shared'],
+            },
+            {
+              sourceTag: 'scope:auth',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:auth'],
+            },
+            {
+              sourceTag: 'scope:user',
+              onlyDependOnLibsWithTags: ['scope:shared', 'scope:user'],
+            },
+            {
+              sourceTag: 'scope:notification',
+              onlyDependOnLibsWithTags: ['scope:shared'],
+            },
+            {
+              sourceTag: 'scope:shared',
+              onlyDependOnLibsWithTags: ['scope:shared'],
             },
           ],
         },

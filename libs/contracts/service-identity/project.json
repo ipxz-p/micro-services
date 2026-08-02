@@ -1,0 +1,8 @@
+{
+  "name": "service-identity",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/contracts/service-identity/src",
+  "projectType": "library",
+  "tags": ["type:contract", "scope:shared"],
+  "targets": {}
+}

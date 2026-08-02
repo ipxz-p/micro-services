@@ -12,10 +12,10 @@ import {
   LoginRequest,
   RefreshTokenRequest,
   RegisterRequest,
-} from '@micro-service/proto-contracts';
-import { callGrpc } from '../common/grpc-call.util';
-import { Public } from './decorators/public.decorator';
-import { AUTH_SERVICE_GRPC } from './auth-grpc.constants';
+} from '@micro-service/proto-contracts/auth/v1/auth';
+import { callGrpc } from '@micro-service/nest-grpc';
+import { Public } from '@micro-service/nest-auth';
+import { AUTH_SERVICE_GRPC } from '@micro-service/nest-grpc';
 import { LoginDto, RefreshTokenDto, RegisterDto } from './dto/auth.dto';
 
 @Controller('auth')

@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// dedup store สำหรับ at-least-once delivery จาก Kafka
+///
+/// outbox pattern (ดู user-service) รับประกันว่า event จะถูกส่ง "อย่างน้อย
+/// 1 ครั้ง" ไม่ใช่ "พอดี 1 ครั้ง" — Kafka เองก็ redeliver ได้ถ้า consumer
+/// ล่มก่อน commit offset ดังนั้นถ้าไม่มีตารางนี้ ผู้ใช้จะได้อีเมลต้อนรับซ้ำ
+/// ทุกครั้งที่มีการส่งซ้ำเกิดขึ้น
+model ProcessedEvent {
+  eventId     String   @id
+  eventType   String
+  processedAt DateTime @default(now())
+
+  /// เผื่อ query "เหตุการณ์ event ประเภทไหนเกิดถี่/ซ้ำบ่อย" ตอน debug
+  @@index([eventType, processedAt])
+}

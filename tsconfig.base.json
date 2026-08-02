@@ -15,9 +15,22 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@micro-service/event-contracts": ["libs/event-contracts/src/index.ts"],
-      "@micro-service/kafka-nest": ["libs/kafka-nest/src/index.ts"],
-      "@micro-service/proto-contracts": ["libs/proto-contracts/src/index.ts"]
+      "@micro-service/event-contracts": ["libs/contracts/event-contracts/src/index.ts"],
+      "@micro-service/event-contracts/*": ["libs/contracts/event-contracts/src/*"],
+      "@micro-service/kafka-nest": ["libs/platform/kafka-nest/src/index.ts"],
+      "@micro-service/nest-auth": ["libs/platform/nest-auth/src/index.ts"],
+      "@micro-service/nest-config": ["libs/platform/nest-config/src/index.ts"],
+      "@micro-service/nest-grpc": ["libs/platform/nest-grpc/src/index.ts"],
+      "@micro-service/nest-observability": [
+        "libs/platform/nest-observability/src/index.ts"
+      ],
+      "@micro-service/nest-outbox": ["libs/platform/nest-outbox/src/index.ts"],
+      "@micro-service/proto-contracts/*": [
+        "libs/contracts/proto-contracts/src/generated/*"
+      ],
+      "@micro-service/service-identity": [
+        "libs/contracts/service-identity/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

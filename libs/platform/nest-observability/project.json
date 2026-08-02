@@ -1,0 +1,8 @@
+{
+  "name": "nest-observability",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/platform/nest-observability/src",
+  "projectType": "library",
+  "tags": ["type:platform", "scope:shared"],
+  "targets": {}
+}
