@@ -22,7 +22,7 @@ async function bootstrap() {
     }),
   );
 
-  app.setGlobalPrefix('api', { exclude: ['health/(.*)'] });
+  app.setGlobalPrefix('api', { exclude: ['health/(.*)', 'metrics'] });
 
   app.enableShutdownHooks();
 

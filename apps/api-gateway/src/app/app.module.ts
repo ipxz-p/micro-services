@@ -21,7 +21,9 @@ import { GrpcPlatformModule } from '@micro-service/nest-grpc';
 import {
   CorrelationIdMiddleware,
   HealthModule,
+  HttpMetricsMiddleware,
   LoggingModule,
+  MetricsModule,
 } from '@micro-service/nest-observability';
 import { AuthGatewayModule } from '../auth/auth.gateway.module';
 import { UsersGatewayModule } from '../users/users.gateway.module';
@@ -43,6 +45,7 @@ import { AppService } from './app.service';
     LoggingModule.forService({ serviceName: 'api-gateway' }),
     GrpcPlatformModule.forService({ role: 'gateway' }),
     HealthModule.forService({ serviceName: 'api-gateway' }),
+    MetricsModule.forService(),
     JwtSharedModule,
     AuthGatewayModule,
     UsersGatewayModule,
@@ -53,7 +56,7 @@ import { AppService } from './app.service';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(CorrelationIdMiddleware)
+      .apply(CorrelationIdMiddleware, HttpMetricsMiddleware)
       .forRoutes({ path: '*splat', method: RequestMethod.ALL });
   }
 }

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import {
   PlatformConfigModule,
   appConfig,
@@ -14,9 +15,11 @@ import {
 } from '@micro-service/nest-config';
 import { GrpcPlatformModule } from '@micro-service/nest-grpc';
 import {
+  GrpcMetricsInterceptor,
   HEALTH_INDICATORS,
   HealthModule,
   LoggingModule,
+  MetricsModule,
 } from '@micro-service/nest-observability';
 import { UserOutboxModule } from '../outbox/outbox.module';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -58,9 +61,13 @@ import { UsersModule } from '../users/users.module';
         ],
       },
     }),
+    MetricsModule.forService(),
     PrismaModule,
     UsersModule,
     UserOutboxModule,
+  ],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: GrpcMetricsInterceptor },
   ],
 })
 export class AppModule {}
