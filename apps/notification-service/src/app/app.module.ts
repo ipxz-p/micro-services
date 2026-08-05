@@ -14,6 +14,7 @@ import {
   HEALTH_INDICATORS,
   HealthModule,
   LoggingModule,
+  MetricsModule,
 } from '@micro-service/nest-observability';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -46,6 +47,7 @@ import { PrismaService } from '../prisma/prisma.service';
         ],
       },
     }),
+    MetricsModule.forService(),
     PrismaModule,
     NotificationsModule,
   ],
