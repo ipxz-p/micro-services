@@ -14,6 +14,13 @@ x-app-env: &app-env
   AUTH_SERVICE_GRPC_URL: auth-service:50052
 
 services:
+    # ตอน `pnpm stack:up` service เป็น container กันหมด → สลับ scrape config
+  # ไปใช้ชุดที่เรียกด้วยชื่อ service แทน host.docker.internal
+  # (compose เอา 2 ไฟล์มา merge กัน ค่า volumes ของ service เดียวกันจะถูกแทนที่)
+  prometheus:
+    volumes:
+      - ./infra/prometheus/prometheus.stack.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
   api-gateway:
     <<: *app
     build:

@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus เก็บ metric ของตัวเองด้วย — ใช้เช็คว่า Prometheus ยังมีชีวิตอยู่
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # service ทั้งหมดใน project
+  - job_name: api-gateway
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api-gateway:3000"]
+        labels:
+          service: api-gateway
+
+  - job_name: user-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["user-service:3051"]
+        labels:
+          service: user-service
+
+  - job_name: auth-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["auth-service:3052"]
+        labels:
+          service: auth-service
+
+  - job_name: notification-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["notification-service:3060"]
+        labels:
+          service: notification-service
