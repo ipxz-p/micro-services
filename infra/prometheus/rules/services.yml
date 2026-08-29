@@ -1,0 +1,36 @@
+groups:
+  - name: services
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.service }} ไม่ตอบสนอง scrape มา 1 นาที'
+          description: 'target {{ $labels.instance }} (job {{ $labels.job }}) ตอบ up == 0'
+
+      - alert: HighErrorRate
+        expr: |
+          sum by (service) (rate(http_request_duration_seconds_count{status_code=~"5.."}[5m]))
+          /
+          sum by (service) (rate(http_request_duration_seconds_count[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.service }} มี HTTP 5xx เกิน 5% ของ traffic'
+          description: 'error ratio = {{ $value | humanizePercentage }} ใน 5 นาทีล่าสุด'
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le, service) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: '{{ $labels.service }} p95 latency เกิน 1s'
+          description: 'p95 = {{ $value | humanizeDuration }} ใน 5 นาทีล่าสุด'

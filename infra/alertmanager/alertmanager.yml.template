@@ -1,0 +1,23 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: '__SMTP_FROM__'
+  smtp_auth_username: '__SMTP_FROM__'
+  smtp_auth_password: '__SMTP_APP_PASSWORD__'
+  smtp_require_tls: true
+
+route:
+  # ทุก alert ที่ไม่ match route ย่อยไหนเลย จะตกมาที่ receiver นี้เป็นค่าเริ่มต้น
+  receiver: default
+  # รวม alert ที่มี label ชุดเดียวกันไว้ notification เดียวกัน
+  # กันไม่ให้ service ล่ม 1 ตัวส่ง 20 อีเมลเพราะมี 20 alert ยิงพร้อมกัน
+  group_by: ['alertname', 'service']
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 3h
+
+receivers:
+  - name: default
+    email_configs:
+      - to: '__SMTP_TO__'
+        send_resolved: true
