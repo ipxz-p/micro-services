@@ -7,7 +7,7 @@ global:
   smtp_require_tls: true
 
 route:
-  # ทุก alert ที่ไม่ match route ย่อยไหนเลย จะตกมาที่ receiver นี้เป็นค่าเริ่มต้น
+  # alert ที่ไม่เข้า route ลูกตัวไหนเลยจะตกมาที่นี่
   receiver: default
   # รวม alert ที่มี label ชุดเดียวกันไว้ notification เดียวกัน
   # กันไม่ให้ service ล่ม 1 ตัวส่ง 20 อีเมลเพราะมี 20 alert ยิงพร้อมกัน
@@ -16,8 +16,44 @@ route:
   group_interval: 5m
   repeat_interval: 3h
 
+  routes:
+    - matchers:
+        - severity = "critical"
+      receiver: critical
+      group_wait: 10s
+      repeat_interval: 1h
+
+    - matchers:
+        - severity = "warning"
+      receiver: warning
+      group_wait: 5m
+      repeat_interval: 12h
+
+inhibit_rules:
+  # ถ้า ServiceDown ยิงแล้ว ไม่ต้องส่ง alert อื่นของ service เดียวกันซ้ำ
+  - source_matchers:
+      - alertname = "ServiceDown"
+    target_matchers:
+      - alertname =~ "HighErrorRate|HighLatencyP95"
+    # ปิดกั้นเฉพาะเมื่อเป็น service เดียวกันเท่านั้น
+    equal: ['service']
+
 receivers:
   - name: default
     email_configs:
       - to: '__SMTP_TO__'
         send_resolved: true
+
+  - name: critical
+    email_configs:
+      - to: '__SMTP_TO__'
+        send_resolved: true
+        headers:
+          Subject: '[CRITICAL] {{ .CommonLabels.alertname }} - {{ .CommonLabels.service }}'
+
+  - name: warning
+    email_configs:
+      - to: '__SMTP_TO__'
+        send_resolved: true
+        headers:
+          Subject: '[warning] {{ .CommonLabels.alertname }} - {{ .CommonLabels.service }}'
