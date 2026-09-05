@@ -10,6 +10,8 @@ export default [
       '**/out-tsc',
       'libs/contracts/proto-contracts/src/generated/**',
       'apps/*/generated/**',
+      '**/vite.config.*.timestamp*',
+      '**/vitest.config.*.timestamp*',
     ],
   },
   {
@@ -47,6 +49,10 @@ export default [
             },
             {
               sourceTag: 'scope:notification',
+              onlyDependOnLibsWithTags: ['scope:shared'],
+            },
+            {
+              sourceTag: 'scope:web',
               onlyDependOnLibsWithTags: ['scope:shared'],
             },
             {
